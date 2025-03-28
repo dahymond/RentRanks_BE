@@ -28,15 +28,19 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "http://localhost:3000",
+    
     "https://rentranks-be.onrender.com",
-    "rentranks-be.onrender.com"
+    "rentranks-be.onrender.com",
+    
+    "https://rentranks.netlify.app",
+    "rentranks.netlify.app"
 ]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Allow requests from Next.js app
     "https://rentranks-be.onrender.com",
+    "https://rentranks.netlify.app",
 ]
-
 
 # Application definition
 INSTALLED_APPS = [
