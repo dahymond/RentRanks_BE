@@ -68,7 +68,7 @@ def social_login(request):
         else:
             return JsonResponse({"error": "Unsupported provider"}, status=400)
         
-        # print(user_defaults)
+        print(email, user_defaults)
         
         user, created = User.objects.update_or_create(email=email, defaults=user_defaults)
 
