@@ -9,6 +9,7 @@ class User(models.Model):
     first_name = models.TextField(null=False)
     last_name = models.TextField(null=True)
     email = models.EmailField(unique=True)
+    password = models.CharField(max_length=255, blank=True, null=True)  # Store hashed passwords for credentials login
     google_id = models.CharField(max_length=255, blank=True, null=True, unique=True)
     facebook_id = models.CharField(max_length=255, blank=True, null=True, unique=True)
     access_token = models.TextField(null=True)
@@ -20,19 +21,38 @@ class User(models.Model):
     # REQUIRED_FIELDS = ["username"]
     
 
-class Profile(models.Model):  # Profile to be reviewed
+class Profile(models.Model):
     full_name = models.CharField(max_length=255)
-    email = models.EmailField(unique=True, null=True, blank=True)  # Optional if no email provided in review
-    phone_number = models.CharField(max_length=20, null=True, blank=True)  # Optional
+    email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
     role = models.CharField(max_length=10, choices=User.ROLE_CHOICES)
     is_claimed = models.BooleanField(default=False)
     claimed_by = models.OneToOneField(User, null=True, blank=True, on_delete=models.SET_NULL)
+    
+    # Address fields
+    address_line1 = models.CharField(max_length=255, blank=True, null=True)
+    address_line2 = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    state = models.CharField(max_length=100, blank=True, null=True)
+    zip_code = models.CharField(max_length=20, blank=True, null=True)
+    location = models.CharField(max_length=100, blank=True, null=True)  # For display purposes
+
+    def __str__(self):
+        return f"{self.full_name} ({self.role})"
+
+    def save(self, *args, **kwargs):
+        # Auto-generate location string if address fields exist
+        if self.city and self.state:
+            self.location = f"{self.city}, {self.state}"
+        super().save(*args, **kwargs)
+
 
 class Review(models.Model):
-    reviewer = models.ForeignKey(User, on_delete=models.CASCADE)  # Who wrote the review
+    reviewer = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)  # Who wrote the review. Null for anonymous
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="reviews")  # Who the review is about
     rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])  # 1-5 rating
     comment = models.TextField()
+    is_anonymous = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
 

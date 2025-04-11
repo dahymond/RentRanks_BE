@@ -61,15 +61,15 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # Allow frontend to connect
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # Allow frontend to connect
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'core_app.middleware.JWTAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'core_app.middleware.JWTAuthenticationMiddleware'
+    'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
 
 MIDDLEWARE.insert(0, "core_app.middleware.DisableCSRFMiddleware")
