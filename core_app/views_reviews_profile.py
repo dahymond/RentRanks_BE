@@ -207,6 +207,7 @@ def get_user_profile(request, profile_id):
         "type": profile.role,  # 'landlord' or 'tenant'
         "rating": round(average_rating, 1),
         "email": profile.email,
+        "is_claimed": profile.is_claimed,
         "profileStatus": "Claimed" if profile.is_claimed else "Unclaimed",
         "reviewCount": review_count,
         "location": profile.location or "Location not specified",
@@ -317,41 +318,53 @@ def get_user_review_history(request):
 
 
 
+@csrf_exempt
+@require_http_methods(["POST"])
 def claim_profile(request):
+    # Authentication check
+    if not request.user:
+        return JsonResponse({"error": "Authentication required"}, status=401)
     
-    data = json.loads(request.body)
-    profile_id =  data['profile_id']
     try:
-        user = request.user
-        if not user:
-            return JsonResponse({"error": "User not found."}, status=400)
+        data = json.loads(request.body)
+        profile_id = data.get('profile_id')
         
-        profile = Profile.objects.filter(id=profile_id, is_claimed=False).first()
-        if not profile:
-            return JsonResponse({"error": "Profile not found or already claimed."}, status=400)
-
-        # Verification (email match or manual admin approval)
-        if profile.email and profile.email == user.email:
-            profile.is_claimed = True
-            profile.claimed_by = user
-            profile.save()
-            return JsonResponse({"message": "Profile claimed successfully."})
+        if not profile_id:
+            return JsonResponse({"error": "Profile ID is required"}, status=400)
         
-        # # This commented out code is useful for when we decide to 
-        # # allow admins review profile claim requests before accepting/rejecting
-        # # for now, the claim request is handled by the code directly above
+        try:
+            profile = Profile.objects.get(id=profile_id)
+        except Profile.DoesNotExist:
+            return JsonResponse({"error": "Profile not found"}, status=404)
         
-        # # Create a pending claim request
-        # claim_request, created = ProfileClaimRequest.objects.get_or_create(
-        #     profile=profile,
-        #     user=user
-        # )
-
-        # if not created:
-        #     return JsonResponse({"message": "You already submitted a claim request."}, status=400)
+        # Check if profile is already claimed
+        if profile.is_claimed:
+            return JsonResponse({
+                "success": False,
+                "error": "Profile is already claimed",
+                "claimed_by_you": profile.claimed_by == request.user
+            }, status=400)
         
-        return JsonResponse({"error": "Verification needed. Contact support."}, status=403)
-    
+        # Verify email matches (security check)
+        if profile.email != request.user.email:
+            return JsonResponse({
+                "success": False,
+                "error": "You can only claim profiles matching your email"
+            }, status=403)
+        
+        # Claim the profile
+        profile.is_claimed = True
+        profile.claimed_by = request.user
+        profile.save()
+        
+        return JsonResponse({
+            "success": True,
+            "message": "Profile claimed successfully",
+            "profile_id": str(profile.id)
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 

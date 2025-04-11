@@ -1,6 +1,6 @@
 from django.urls import path
 from core_app.views import social_login, refresh_token, credentials_login, register
-from core_app.views_reviews_profile import submit_review, get_user_profile, get_user_review_history, review_detail, search_profiles
+from core_app.views_reviews_profile import submit_review, get_user_profile, get_user_review_history, review_detail, search_profiles, claim_profile
 
 urlpatterns = [
     # auth
@@ -16,5 +16,6 @@ urlpatterns = [
     
     # profiles
     path('profiles/search/', search_profiles, name='search-profiles'), # search other profiles
+    path('profiles/claim/', claim_profile, name='claim-profile'),
     path("profiles/<int:profile_id>/", get_user_profile), #get user's profile
 ]
