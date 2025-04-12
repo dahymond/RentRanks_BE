@@ -201,6 +201,17 @@ def get_user_profile(request, profile_id):
     # Get most recent review date
     last_review_date = reviews.aggregate(Max('created_at'))['created_at__max']
     
+    # Determine profile status with more specific messaging
+    if profile.is_claimed:
+        if profile.claimed_by == user:
+            profile_status = "Claimed by you"
+        elif profile.claimed_by:
+            profile_status = f"Claimed by {profile.claimed_by.first_name} {profile.claimed_by.last_name or ''}"
+        else:
+            profile_status = "Claimed (owner unknown)"
+    else:
+        profile_status = "Unclaimed"
+
     profile_data = {
         "id": str(profile.id),
         "name": profile.full_name,
@@ -208,7 +219,7 @@ def get_user_profile(request, profile_id):
         "rating": round(average_rating, 1),
         "email": profile.email,
         "is_claimed": profile.is_claimed,
-        "profileStatus": "Claimed" if profile.is_claimed else "Unclaimed",
+        "profileStatus": profile_status,
         "reviewCount": review_count,
         "location": profile.location or "Location not specified",
         "lastReviewDate": last_review_date.strftime("%Y-%m-%d") if last_review_date else None,
